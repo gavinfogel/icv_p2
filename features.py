@@ -87,7 +87,7 @@ class HarrisKeypointDetector(KeypointDetector):
         harrisImage = np.zeros(srcImage.shape[:2])
         orientationImage = np.zeros(srcImage.shape[:2])
 
-        # Helpful functionality
+        # Helpful functionality from assignment document
         # scipy.ndimage.sobel: Filters the input image with Sobel filter.
         # scipy.ndimage.gaussian filter: Filters the input image with a Gaussian filter.
         # scipy.ndimage.filters.maximum filter: Filters the input image with a maximum filter.
@@ -192,11 +192,12 @@ class HarrisKeypointDetector(KeypointDetector):
                 # f.angle to the orientation in degrees and f.response to
                 # the Harris score
                 # TODO-BLOCK-BEGIN
+
                 f.pt = (x, y)
                 f.angle = orientationImage[y, x]
                 f.response = harrisImage[y, x]
                 f.size = 10
-                # raise Exception("TODO in features.py not implemented")
+
                 # TODO-BLOCK-END
 
                 features.append(f)
@@ -241,7 +242,13 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
             # as a row-major vector. Treat pixels outside the image as zero.
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
-            raise Exception("TODO in features.py not implemented")
+
+            # Get 5x5 region from the grayImage, treating pixels outside the image as zero
+            region = grayImage[max(0, y - 2):min(grayImage.shape[0], y + 3),
+                               max(0, x - 2):min(grayImage.shape[1], x + 3)]
+
+            desc[i, :region.size] = region.flatten()
+
             # TODO-BLOCK-END
 
         return desc
