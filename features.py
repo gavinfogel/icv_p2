@@ -9,14 +9,15 @@ import transformations
 
 ## Helper functions ############################################################
 
+
 def inbounds(shape, indices):
     '''
         Input:
             shape -- int tuple containing the shape of the array
-            indices -- int list containing the indices we are trying 
+            indices -- int list containing the indices we are trying
                        to access within the array
         Output:
-            True/False, depending on whether the indices are within the bounds of 
+            True/False, depending on whether the indices are within the bounds of
             the array with the given shape
     '''
     assert len(shape) == len(indices)
@@ -86,11 +87,36 @@ class HarrisKeypointDetector(KeypointDetector):
         harrisImage = np.zeros(srcImage.shape[:2])
         orientationImage = np.zeros(srcImage.shape[:2])
 
+        # Helpful functionality
+        # scipy.ndimage.sobel: Filters the input image with Sobel filter.
+        # scipy.ndimage.gaussian filter: Filters the input image with a Gaussian filter.
+        # scipy.ndimage.filters.maximum filter: Filters the input image with a maximum filter.
+        # scipy.ndimage.filters.convolve: Filters the input image with the selected filter.
+
         # TODO 1: Compute the harris corner strength for 'srcImage' at
-        # each pixel and store in 'harrisImage'. Also compute an 
+        # each pixel and store in 'harrisImage'. Also compute an
         # orientation for each pixel and store it in 'orientationImage.'
         # TODO-BLOCK-BEGIN
-        raise Exception("TODO in features.py not implemented")
+
+        # Compute the x and y gradients
+
+        Ix = ndimage.sobel(srcImage, axis=1)
+        Iy = ndimage.sobel(srcImage, axis=0)
+
+        sigma = 0.5
+
+        # Compute the elements of the Harris matrix H
+        Ix2 = ndimage.gaussian_filter(Ix**2, sigma=sigma)
+        Iy2 = ndimage.gaussian_filter(Iy**2, sigma=sigma)
+        IxIy = ndimage.gaussian_filter(Ix*Iy, sigma=sigma)
+
+        # Compute the Harris response at each pixel
+        k = 0.1
+        harrisImage = (Ix2*Iy2 - IxIy**2) - k*(Ix2 + Iy2)**2
+
+        # Compute the orientation of the gradient at each pixel
+        orientationImage = np.degrees(np.arctan2(Iy, Ix))
+
         # TODO-BLOCK-END
 
         return harrisImage, orientationImage
@@ -110,7 +136,16 @@ class HarrisKeypointDetector(KeypointDetector):
 
         # TODO 2: Compute the local maxima image
         # TODO-BLOCK-BEGIN
-        raise Exception("TODO in features.py not implemented")
+
+        height, width = harrisImage.shape[:2]
+        for i in range(height):
+            for j in range(width):
+                # Check if local max in 7x7 neighborhood
+                local_max = np.max(
+                    harrisImage[max(0, i - 3):min(height, i + 4), max(0, j - 3):min(width, j + 4)])
+                if harrisImage[i, j] == local_max:
+                    destImage[i, j] = True
+
         # TODO-BLOCK-END
 
         return destImage
@@ -157,7 +192,11 @@ class HarrisKeypointDetector(KeypointDetector):
                 # f.angle to the orientation in degrees and f.response to
                 # the Harris score
                 # TODO-BLOCK-BEGIN
-                raise Exception("TODO in features.py not implemented")
+                f.pt = (x, y)
+                f.angle = orientationImage[y, x]
+                f.response = harrisImage[y, x]
+                f.size = 10
+                # raise Exception("TODO in features.py not implemented")
                 # TODO-BLOCK-END
 
                 features.append(f)
@@ -169,8 +208,6 @@ class ORBKeypointDetector(KeypointDetector):
     def detectKeypoints(self, image):
         detector = cv2.ORB_create()
         return detector.detect(image)
-
-
 
 
 ## Feature descriptors #########################################################
@@ -247,7 +284,7 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # Call the warp affine function to do the mapping
             # It expects a 2x3 matrix
             destImage = cv2.warpAffine(grayImage, transMx,
-                (windowSize, windowSize), flags=cv2.INTER_LINEAR)
+                                       (windowSize, windowSize), flags=cv2.INTER_LINEAR)
 
             # TODO 6: Normalize the descriptor to have zero mean and unit
             # variance. If the variance is negligibly small (which we
@@ -268,8 +305,6 @@ class ORBFeatureDescriptor(KeypointDetector):
             desc = np.zeros((0, 128))
 
         return desc
-
-
 
 
 ## Feature matchers ############################################################
@@ -306,7 +341,7 @@ class FeatureMatcher(object):
         d = h[6]*x + h[7]*y + h[8]
 
         return np.array([(h[0]*x + h[1]*y + h[2]) / d,
-            (h[3]*x + h[4]*y + h[5]) / d])
+                         (h[3]*x + h[4]*y + h[5]) / d])
 
 
 class SSDFeatureMatcher(FeatureMatcher):
