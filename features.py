@@ -285,7 +285,28 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # helper functions that might be useful
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
-            raise Exception("TODO in features.py not implemented")
+            # A simplified version of the MOPS descriptor.
+            # You will compute an 8 × 8 oriented patch sub-sampled from a 40 × 40 pixel region around the feature.
+            # You have to come up with a transformation matrix which transforms
+            # the 40 × 40 rotated window around the feature to an 8 × 8 patch
+            # rotated so that its keypoint orientation points to the right.
+            # You should also normalize the patch to have zero mean and unit variance.
+            # You will use cv2.warpAffine to perform the transformation.
+            # warpAffine takes a 2 × 3 for- ward warping afffine matrix, which is multiplied from the left so that transformed coordinates are column vectors.
+            # The easiest way to generate the 2 × 3 matrix is by combining multiple transformations.
+            # A sequence of translation (T1), rotation (R), scaling (S) and translation (T2) will work.
+            # Left- multiplied transformations are combined right-to-left so the transformation matrix is the matrix product T2 S R T1.
+
+            # Translate the image to be centered at the feature point
+            T1 = transformations.get_trans_mx(np.array([-f.pt[0], -f.pt[1], 0]))
+            R = transformations.get_rot_mx(0, 0, -f.angle)
+            S = transformations.get_scale_mx(0.2, 0.2, 0.2) 
+            # Translate the scaled and rotated image back
+            T2 = transformations.get_trans_mx(np.array([windowSize / 2, windowSize / 2, 0]))
+
+            # Multiply together matrices in order T2 S R T1
+            transMx = np.matmul(T2, np.matmul(S, np.matmul(R, T1)))
+
             # TODO-BLOCK-END
 
             # Call the warp affine function to do the mapping
@@ -298,7 +319,15 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # define as less than 1e-10) then set the descriptor
             # vector to zero. Lastly, write the vector to desc.
             # TODO-BLOCK-BEGIN
-            raise Exception("TODO in features.py not implemented")
+
+            destImage = (destImage - np.mean(destImage)) / np.std(destImage)
+
+            # If the variance is negligibly small (which we define as less than 1e-10) then set the descriptor vector to zero
+            if np.std(destImage) < 1e-10:
+                destImage = np.zeros((windowSize, windowSize))
+
+            desc[i, :] = destImage.flatten()
+
             # TODO-BLOCK-END
 
         return desc
