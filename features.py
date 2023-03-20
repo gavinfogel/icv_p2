@@ -288,19 +288,13 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # Translate the image to be centered at the feature point
 
             T1 = transformations.get_trans_mx(np.array([-f.pt[0], -f.pt[1], 0]))
-
-            R = transformations.get_rot_mx(0, 0, np.deg2rad(-f.angle))
-            S = transformations.get_scale_mx(0.2, 0.2, 1)
-
-            T2 = transformations.get_trans_mx(np.array([windowSize // 2, windowSize // 2, 0]))
+            R = transformations.get_rot_mx(0, 0, -f.angle * np.pi / 180)
+            S = transformations.get_scale_mx(1/5, 1/5, 1)
+            T2 = transformations.get_trans_mx(np.array([4, 4, 0]))
 
             # Multiply together matrices in order T2 S R T1
-            transMx = T2 @ S @ R @ T1
+            transMx = np.dot(T2, np.dot(S, np.dot(R, T1)))
 
-            # Update the matrix from 4x4 to be 2x3
-            # For 2D transformations, we only care about rotations around the
-            # z-axis and scaling about x and y. This gives a hint as to what
-            # part of the matrix you need.
             transMx = transMx[:2, :3]
 
             # TODO-BLOCK-END
@@ -316,13 +310,14 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # vector to zero. Lastly, write the vector to desc.
             # TODO-BLOCK-BEGIN
 
-            mean = np.mean(destImage)
+            destImage = destImage - np.mean(destImage)
             std = np.std(destImage)
 
             if std > 1e-10:
-                destImage = (destImage - mean) / std
+                norm_desc = destImage / std
+                desc[i, :] = norm_desc.flatten()
             else:
-                destImage = np.zeros((windowSize, windowSize))
+                desc[i, :] = 0
 
             desc[i, :] = destImage.flatten()
 
