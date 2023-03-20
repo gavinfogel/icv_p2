@@ -286,12 +286,13 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
             # Translate the image to be centered at the feature point
-            T1 = transformations.get_trans_mx(
-                np.array([f.pt[0], f.pt[1], 0]))
-            R = transformations.get_rot_mx(0, 0, -f.angle)
-            S = transformations.get_scale_mx(0.2, 0.2, 0.2)
-            T2 = transformations.get_trans_mx(
-                np.array([windowSize / 2, windowSize / 2, 0]))
+
+            T1 = transformations.get_trans_mx(np.array([-f.pt[0], -f.pt[1], 0]))
+
+            R = transformations.get_rot_mx(0, 0, np.deg2rad(-f.angle))
+            S = transformations.get_scale_mx(0.2, 0.2, 1)
+
+            T2 = transformations.get_trans_mx(np.array([windowSize // 2, windowSize // 2, 0]))
 
             # Multiply together matrices in order T2 S R T1
             transMx = T2 @ S @ R @ T1
@@ -322,9 +323,6 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
                 destImage = (destImage - mean) / std
             else:
                 destImage = np.zeros((windowSize, windowSize))
-
-            # Clip the descriptor values to be between 0 and 1
-            destImage = np.clip(destImage, 0, 1)
 
             desc[i, :] = destImage.flatten()
 
