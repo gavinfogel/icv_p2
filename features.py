@@ -292,7 +292,7 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             S = transformations.get_scale_mx(1/5, 1/5, 1)
             T2 = transformations.get_trans_mx(np.array([windowSize / 2, windowSize / 2, 0]))
 
-            # Multiply together matrices in order T2 S R T1
+            # Multiply together matrices in order T2 S R T1, extract relevant columns and rows
             transMx = (T2 @ S @ R @ T1)[:2, [0, 1, 3]]
 
             # TODO-BLOCK-END
@@ -308,12 +308,11 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # vector to zero. Lastly, write the vector to desc.
             # TODO-BLOCK-BEGIN
 
-            destImage = destImage - np.mean(destImage) # norm
+            destImage = destImage - np.mean(destImage)
 
             std = np.std(destImage)
-            var = std ** 2
 
-            if var > 1e-10:
+            if std ** 2 > 1e-10: # check variance (std^2 is in range)
                 destImage = destImage / std
                 desc[i, :] = destImage.flatten()
             else:
@@ -402,7 +401,11 @@ class SSDFeatureMatcher(FeatureMatcher):
         # Note: multiple features from the first image may match the same
         # feature in the second image.
         # TODO-BLOCK-BEGIN
-        raise Exception("TODO in features.py not implemented")
+
+        for i in range(desc1.shape[0]):
+            dist = np.sum((desc1[i] - desc2) ** 2, axis=1)
+            matches.append(cv2.DMatch(i, np.argmin(dist), np.min(dist)))
+
         # TODO-BLOCK-END
 
         return matches
@@ -442,7 +445,17 @@ class RatioFeatureMatcher(FeatureMatcher):
         # Note: multiple features from the first image may match the same
         # feature in the second image.
         # TODO-BLOCK-BEGIN
-        raise Exception("TODO in features.py not implemented")
+
+        for i in range(desc1.shape[0]):
+            dist = np.sum((desc1[i] - desc2) ** 2, axis=1)
+            sorted_dist = np.sort(dist)
+            if sorted_dist[0] < 1e-5:
+                matches.append(cv2.DMatch(i, np.argmin(dist), 1))
+            elif sorted_dist[1] < 1e-5:
+                matches.append(cv2.DMatch(i, np.argmin(dist), 0))
+            else:
+                matches.append(cv2.DMatch(i, np.argmin(dist), sorted_dist[0] / sorted_dist[1]))
+
         # TODO-BLOCK-END
 
         return matches
