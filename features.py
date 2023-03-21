@@ -403,7 +403,8 @@ class SSDFeatureMatcher(FeatureMatcher):
         # TODO-BLOCK-BEGIN
 
         for i in range(desc1.shape[0]):
-            dist = np.sum((desc1[i] - desc2) ** 2, axis=1)
+            desc = desc1[i] - desc2
+            dist = np.sum((desc) ** 2, axis=1)
             matches.append(cv2.DMatch(i, np.argmin(dist), np.min(dist)))
 
         # TODO-BLOCK-END
