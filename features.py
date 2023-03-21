@@ -288,14 +288,12 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # Translate the image to be centered at the feature point
 
             T1 = transformations.get_trans_mx(np.array([-f.pt[0], -f.pt[1], 0]))
-            R = transformations.get_rot_mx(0, 0, -f.angle * np.pi / 180)
+            R = transformations.get_rot_mx(0, 0, np.deg2rad(-f.angle))
             S = transformations.get_scale_mx(1/5, 1/5, 1)
-            T2 = transformations.get_trans_mx(np.array([4, 4, 0]))
+            T2 = transformations.get_trans_mx(np.array([windowSize / 2, windowSize / 2, 0]))
 
             # Multiply together matrices in order T2 S R T1
-            transMx = np.dot(T2, np.dot(S, np.dot(R, T1)))
-
-            transMx = transMx[:2, :3]
+            transMx = (T2 @ S @ R @ T1)[:2, [0, 1, 3]]
 
             # TODO-BLOCK-END
 
@@ -310,16 +308,16 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # vector to zero. Lastly, write the vector to desc.
             # TODO-BLOCK-BEGIN
 
-            destImage = destImage - np.mean(destImage)
-            std = np.std(destImage)
+            destImage = destImage - np.mean(destImage) # norm
 
-            if std > 1e-10:
-                norm_desc = destImage / std
-                desc[i, :] = norm_desc.flatten()
+            std = np.std(destImage)
+            var = std ** 2
+
+            if var > 1e-10:
+                destImage = destImage / std
+                desc[i, :] = destImage.flatten()
             else:
                 desc[i, :] = 0
-
-            desc[i, :] = destImage.flatten()
 
             # TODO-BLOCK-END
 
