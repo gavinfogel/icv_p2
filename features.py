@@ -132,7 +132,7 @@ class HarrisKeypointDetector(KeypointDetector):
                          the pixel value is the local maxima in
                          its 7x7 neighborhood.
         '''
-        destImage = np.zeros_like(harrisImage, np.bool)
+        destImage = np.zeros_like(harrisImage, np.bool_)
 
         # TODO 2: Compute the local maxima image
         # TODO-BLOCK-BEGIN
@@ -244,8 +244,11 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
             # TODO-BLOCK-BEGIN
 
             # Get 5x5 region from the grayImage, treating pixels outside the image as zero
-            region = grayImage[max(0, y - 2):min(grayImage.shape[0], y + 3),
-                               max(0, x - 2):min(grayImage.shape[1], x + 3)]
+            # region = grayImage[max(0, y - 2):min(grayImage.shape[0], y + 3),
+            #                    max(0, x - 2):min(grayImage.shape[1], x + 3)]
+            y = y+2
+            x = x+2
+            region = np.pad(grayImage, ((2, 2), (2, 2)), mode='constant', constant_values=(0))[y-2:y+3, x-2:x+3]
 
             desc[i, :region.size] = region.flatten()
 
@@ -294,6 +297,7 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
 
             # Multiply together matrices in order T2 S R T1, extract relevant columns and rows
             transMx = (T2 @ S @ R @ T1)[:2, [0, 1, 3]]
+
 
             # TODO-BLOCK-END
 
@@ -452,7 +456,8 @@ class RatioFeatureMatcher(FeatureMatcher):
             sorted_dist = np.sort(dist)
             if sorted_dist[0] < 1e-5:
                 matches.append(cv2.DMatch(i, np.argmin(dist), 1))
-            elif sorted_dist[1] < 1e-5:
+            # elif sorted_dist[1] < 1e-5:
+            elif len(sorted_dist) < 2:
                 matches.append(cv2.DMatch(i, np.argmin(dist), 0))
             else:
                 matches.append(cv2.DMatch(i, np.argmin(dist), sorted_dist[0] / sorted_dist[1]))
