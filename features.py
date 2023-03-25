@@ -99,7 +99,6 @@ class HarrisKeypointDetector(KeypointDetector):
         # TODO-BLOCK-BEGIN
 
         # Compute the x and y gradients
-
         Ix = ndimage.sobel(srcImage, axis=1)
         Iy = ndimage.sobel(srcImage, axis=0)
 
@@ -244,12 +243,9 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
             # TODO-BLOCK-BEGIN
 
             # Get 5x5 region from the grayImage, treating pixels outside the image as zero
-            # region = grayImage[max(0, y - 2):min(grayImage.shape[0], y + 3),
-            #                    max(0, x - 2):min(grayImage.shape[1], x + 3)]
             y = y+2
             x = x+2
             region = np.pad(grayImage, ((2, 2), (2, 2)), mode='constant', constant_values=(0))[y-2:y+3, x-2:x+3]
-
             desc[i, :region.size] = region.flatten()
 
             # TODO-BLOCK-END
@@ -456,7 +452,6 @@ class RatioFeatureMatcher(FeatureMatcher):
             sorted_dist = np.sort(dist)
             if sorted_dist[0] < 1e-5:
                 matches.append(cv2.DMatch(i, np.argmin(dist), 1))
-            # elif sorted_dist[1] < 1e-5:
             elif len(sorted_dist) < 2:
                 matches.append(cv2.DMatch(i, np.argmin(dist), 0))
             else:
